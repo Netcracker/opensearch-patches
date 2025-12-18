@@ -141,7 +141,7 @@ jobs:
           fi
           sed -i '
           / *- *name: *OpenSearch/,/^[[:space:]]*-/ {
-          s|^\([[:space:]]*\)repository:.*|\1repository: https://github.com/${{ github.repository }}.git|
+          s|^\([[:space:]]*\)repository:.*|\1repository: https://github.com/${GITHUB_REPOSITORY}.git|
           s|^\([[:space:]]*\)ref:.*|\1ref: ${custom_branch}|
           }
           ' manifests/${opensearch_tag}/opensearch-${opensearch_tag}.yml
