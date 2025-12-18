@@ -4,7 +4,7 @@ permissions:
 on:
   workflow_call:
     inputs:
-        open-search-tag:
+        opensearch-tag:
             type: string
             required: true
             description: "Tag in the opensearch-project/OpenSearch repository"
@@ -14,7 +14,8 @@ on:
             required: false
             default: true
 env:
-  default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ inputs.open-search-tag }}-custom-patches"
+  default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ inputs.opensearch-tag }}-custom-patches"
+  opensearch_tag: "${{ inputs.opensearch-tag }}"
 jobs:
   build-and-push-docker:
     permissions:
@@ -23,13 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout openserch-project/opensearch-build"
-        uses: actions/checkout@v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
           repository: opensearch-project/opensearch-build
           ref: main
           path: opensearch-build
       - name: "Download OpenSearch build artifacts"
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
         with:
           path: ${{ github.workspace }}/opensearch-build/tar/dist/
       - name: "Find the OpenSearch tarball"
@@ -43,13 +44,13 @@ jobs:
           echo "TARFILE=$TARFILE" >> $GITHUB_ENV
           echo "Found tarball(s): $TARFILE"
       - name: "Setup QEMU"
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3.7.0
         with:
           platforms: all
       - name: "Set up Docker Buildx"
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435  # v3.11.1
       - name: "Login to GitHub Container Registry"
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef  # v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -59,12 +60,12 @@ jobs:
           cd ${GITHUB_WORKSPACE}/opensearch-build/docker/release
           sed -i 's/TARBALL=`realpath $OPTARG`/TARBALL=`realpath -z $OPTARG`/' ./build-image-multi-arch.sh
           chmod +x ./build-image-multi-arch.sh
-          ./build-image-multi-arch.sh -v ${{ inputs.open-search-tag }} -f ./dockerfiles/opensearch.al2.dockerfile -p opensearch -a "arm64,x64" -t "${{ env.TARFILE }}" -r ghcr.io/${{ github.repository_owner }}/opensearch
+          ./build-image-multi-arch.sh -v ${opensearch_tag} -f ./dockerfiles/opensearch.al2.dockerfile -p opensearch -a "arm64,x64" -t "${TARFILE}" -r ghcr.io/${{ github.repository_owner }}/opensearch
       - name: "Push default tag"
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/opensearch:${{ inputs.open-search-tag }}
-          docker tag ghcr.io/${{ github.repository_owner }}/opensearch:${{ inputs.open-search-tag }} ${{ env.default_custom_tag }}
-          docker push ${{ env.default_custom_tag }}
+          docker pull ghcr.io/${{ github.repository_owner }}/opensearch:${opensearch_tag}
+          docker tag ghcr.io/${{ github.repository_owner }}/opensearch:${opensearch_tag} ${default_custom_tag}
+          docker push ${default_custom_tag}
 
   docker-image-tests:
     name: "${{ matrix.platform.architecture }} Docker Image Tests"
@@ -85,8 +86,8 @@ jobs:
             echo "Docker tests are disabled. Skipping."
             exit 0
           fi
-          echo "Running tests on Docker image ${{ env.default_custom_tag }}..."
-          docker run -d --rm --name ops-test -p 9200:9200 -p 9600:9600 -e OPENSEARCH_INITIAL_ADMIN_PASSWORD=InItIaL$tr0ngPa$$w0rd -e "discovery.type=single-node" ${{ env.default_custom_tag }}
+          echo "Running tests on Docker image ${default_custom_tag}..."
+          docker run -d --rm --name ops-test -p 9200:9200 -p 9600:9600 -e OPENSEARCH_INITIAL_ADMIN_PASSWORD=InItIaL$tr0ngPa$$w0rd -e "discovery.type=single-node" ${default_custom_tag}
           sleep 120
           docker logs ops-test | grep "Cluster health status changed from \[YELLOW\] to \[GREEN\]"
           echo "Docker image test passed successfully."
