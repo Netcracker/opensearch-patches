@@ -184,6 +184,9 @@ jobs:
     needs: [build-and-push-docker]
     runs-on: ubuntu-latest
     steps:
+      - name: set default custom tag
+        run: |
+          echo "default_custom_tag=${default_custom_tag,,}" >> $GITHUB_ENV
       - name: "Trigger ${{ github.event.repository.name }}/qubership-opensearch build"
         if: ${{ inputs.trigger-qubership-opensearch-build }}
         uses: netcracker/qubership-workflow-hub/actions/custom-event@396774180000abdb825cbf150b56cc59c6913db8  # v2.0.5
