@@ -167,7 +167,7 @@ jobs:
         if: ${{ inputs.integration-tests }}
         run: |
           echo "Triggering opensearch integration tests..."
-          docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && mv -rf tar/* . && ./test.sh integ-test manifests/${opensearch_tag}/opensearch-${opensearch_tag}-test.yml"
+          docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && mv -f tar/* . && ./test.sh integ-test manifests/${opensearch_tag}/opensearch-${opensearch_tag}-test.yml"
   build-and-push-docker:
     permissions:
       contents: read
