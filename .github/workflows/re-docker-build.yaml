@@ -64,8 +64,8 @@ jobs:
       - name: "Push default tag"
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/opensearch:${opensearch_tag}
-          docker tag ghcr.io/${{ github.repository_owner }}/opensearch:${opensearch_tag} ${default_custom_tag}
-          docker push ${default_custom_tag}
+          docker tag ghcr.io/${{ github.repository_owner }}/opensearch:${opensearch_tag} ${default_custom_tag,,}
+          docker push ${default_custom_tag,,}
 
   docker-image-tests:
     name: "${{ matrix.platform.architecture }} Docker Image Tests"
@@ -86,8 +86,8 @@ jobs:
             echo "Docker tests are disabled. Skipping."
             exit 0
           fi
-          echo "Running tests on Docker image ${default_custom_tag}..."
-          docker run -d --rm --name ops-test -p 9200:9200 -p 9600:9600 -e OPENSEARCH_INITIAL_ADMIN_PASSWORD=InItIaL$tr0ngPa$$w0rd -e "discovery.type=single-node" ${default_custom_tag}
+          echo "Running tests on Docker image ${default_custom_tag,,}..."
+          docker run -d --rm --name ops-test -p 9200:9200 -p 9600:9600 -e OPENSEARCH_INITIAL_ADMIN_PASSWORD=InItIaL$tr0ngPa$$w0rd -e "discovery.type=single-node" ${default_custom_tag,,}
           sleep 120
           docker logs ops-test | grep "Cluster health status changed from \[YELLOW\] to \[GREEN\]"
           echo "Docker image test passed successfully."
