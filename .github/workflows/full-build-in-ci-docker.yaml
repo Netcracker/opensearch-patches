@@ -15,6 +15,11 @@ on:
         description: "Direcory in this repository with patches"
         required: true
         default: "patches/2.19.3"
+      target-branch:
+        type: string
+        required: true
+        default: "main"
+        description: "Target branch in qubership-opensearch repository"
       integration-tests:
         type: boolean
         description: "Whether to trigger opensearch integration tests (may take a while)"
@@ -190,4 +195,4 @@ jobs:
           owner: ${{ github.repository_owner }}
           repo: qubership-opensearch
           event-type: opensearch-patched-build
-          client-payload: '{"opensearch_tag": "${{ inputs.opensearch-tag }}", "custom_opensearch_version": "${{ env.default_custom_tag }}", "custom_branch": "${{ env.custom_branch }}"}'
+          client-payload: '{"opensearch_tag": "${{ inputs.opensearch-tag }}", "custom_opensearch_version": "${{ env.default_custom_tag }}", "target_branch": "${{ inputs.target-branch }}"}'
