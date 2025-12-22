@@ -195,4 +195,4 @@ jobs:
           owner: ${{ github.repository_owner }}
           repo: qubership-opensearch
           event-type: opensearch-patched-build
-          client-payload: '{"custom_opensearch_version": "${{ env.default_custom_tag }}", "custom_branch": "${{ env.custom_branch }}"}'
+          client-payload: '{"opensearch_tag": "${{ inputs.opensearch-tag }}", "custom_opensearch_version": "${{ env.default_custom_tag }}", "custom_branch": "${{ env.custom_branch }}"}'
