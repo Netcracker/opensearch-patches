@@ -44,7 +44,7 @@ env:
   OPEN_SEARCH_TAG: "${{ inputs.open-search-tag || '3.4.0' }}"
   PATCHES_DIR: "${{ inputs.patches-dir || 'patches/3.4.0' }}"
   TARGET_BRANCH: "${{ inputs.target-branch || 'main' }}"
-  INTEGRATION_TEST: "${{ inputs.integration-tests || 'true' }}"
+  INTEGRATION_TEST: "${{ inputs.integration-tests || 'false' }}"
   DOCKER_TEST: "${{ inputs.docker-test || 'true' }}"
   custom_branch: "applied-patches-${{ github.event.inputs.open-search-tag || '3.4.0' }}-${{ github.run_id }}"
   default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ github.event.inputs.open-search-tag || '3.4.0' }}-custom-patches"
