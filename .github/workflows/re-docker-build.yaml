@@ -4,7 +4,7 @@ permissions:
 on:
   workflow_call:
     inputs:
-        open-search-tag:
+        opensearch-tag:
             type: string
             required: true
             description: "Tag in the opensearch-project/OpenSearch repository"
