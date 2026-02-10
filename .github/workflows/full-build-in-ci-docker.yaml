@@ -1,21 +1,21 @@
 ---
 
 name: "Build OpenSearch in CI Docker"
-run-name: "OpenSearch ${{ inputs.opensearch-tag }} with Custom Patches from ${{ inputs.patches-dir}}"
+run-name: "OpenSearch ${{ inputs.open-search-tag }} with Custom Patches from ${{ inputs.patches-dir}}"
 on:
   workflow_dispatch:
     inputs:
-      opensearch-tag:
+      open-search-tag:
         type: string
         required: true
         description: "Tag in the opensearch-project/OpenSearch repository"
-        default: "2.19.3"
+        default: "3.4.0"
       patches-dir:
         type: string
         description: "Direcory in this repository with patches"
         required: true
-        default: "patches/2.19.3"
-      target-branch:
+        default: "patches/3.4.0"
+      tags:
         type: string
         required: true
         default: "main"
@@ -38,9 +38,8 @@ on:
 permissions:
   contents: read
 env:
-  custom_branch: "applied-patches-${{ github.event.inputs.opensearch-tag }}-${{ github.run_id }}"
-  default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ github.event.inputs.opensearch-tag }}-custom-patches"
-  opensearch_tag: "${{ github.event.inputs.opensearch-tag }}"
+  custom_branch: "applied-patches-${{ github.event.inputs.open-search-tag }}-${{ github.run_id }}"
+  default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ github.event.inputs.open-search-tag }}-custom-patches"
 
 jobs:
   apply-patches:
@@ -50,13 +49,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout OpenSearch"
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        uses: actions/checkout@v5
         with:
           repository: opensearch-project/opensearch
-          ref: ${{ inputs.opensearch-tag }}
+          ref: ${{ inputs.open-search-tag }}
           path: opensearch
       - name: "Checkout this repository"
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
           path: opensearch-custom-patches
@@ -74,10 +73,10 @@ jobs:
           mv -f ${GITHUB_WORKSPACE}/opensearch/* .
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git checkout -b "${custom_branch}"
+          git checkout -b "${{ env.custom_branch }}"
           git add .
-          git commit -m "Applied custom patches to OpenSearch ${opensearch_tag} in branch ${custom_branch}"
-          git push origin "${custom_branch}"
+          git commit -m "Applied custom patches to OpenSearch ${{ inputs.open-search-tag }}"
+          git push origin "${{ env.custom_branch }}"
 
   build-in-docker:
     needs: apply-patches
@@ -93,7 +92,7 @@ jobs:
             architecture: x64
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be  # v1.3.0
+        uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
           android: true
@@ -135,17 +134,17 @@ jobs:
           git clone https://github.com/opensearch-project/opensearch-build.git
           cd opensearch-build
           # Modify build configuration to use patched OpenSearch
-          if [ ! -f manifests/${opensearch_tag}/opensearch-${opensearch_tag}.yml ]; then
-            echo "Error: Build manifest for OpenSearch tag ${opensearch_tag} does not exist."
+          if [ ! -f manifests/${{ inputs.open-search-tag }}/opensearch-${{ inputs.open-search-tag }}.yml ]; then
+            echo "Error: Build manifest for OpenSearch tag ${{ inputs.open-search-tag }} does not exist."
             exit 1
           fi
           sed -i '
           / *- *name: *OpenSearch/,/^[[:space:]]*-/ {
-          s|^\([[:space:]]*\)repository:.*|\1repository: https://github.com/${GITHUB_REPOSITORY}.git|
-          s|^\([[:space:]]*\)ref:.*|\1ref: ${custom_branch}|
+          s|^\([[:space:]]*\)repository:.*|\1repository: https://github.com/${{ github.repository }}.git|
+          s|^\([[:space:]]*\)ref:.*|\1ref: ${{ env.custom_branch }}|
           }
-          ' manifests/${opensearch_tag}/opensearch-${opensearch_tag}.yml
-          ./build.sh manifests/${opensearch_tag}/opensearch-${opensearch_tag}.yml --platform linux -a ${{ matrix.platform.architecture }}
+          ' manifests/${{ inputs.open-search-tag }}/opensearch-${{ inputs.open-search-tag }}.yml
+          ./build.sh manifests/${{ inputs.open-search-tag }}/opensearch-${{ inputs.open-search-tag }}.yml --platform linux -a ${{ matrix.platform.architecture }}
           ./assemble.sh tar/builds/opensearch/manifest.yml
           """ > ${GITHUB_WORKSPACE}/scripts/run-build.sh
           cat ${GITHUB_WORKSPACE}/scripts/run-build.sh
@@ -158,7 +157,7 @@ jobs:
           mkdir -p ${GITHUB_WORKSPACE}/build-artifacts/${{ matrix.platform.architecture }}
           docker cp ci-docker:/home/ci-runner/opensearch-build/tar/dist/opensearch/. ${GITHUB_WORKSPACE}/build-artifacts/${{ matrix.platform.architecture }}/
       - name: Upload OpenSearch build artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
+        uses: actions/upload-artifact@v5
         with:
           name: opensearch-build-artifacts-${{ matrix.platform.architecture }}
           path: |
@@ -167,7 +166,7 @@ jobs:
         if: ${{ inputs.integration-tests }}
         run: |
           echo "Triggering opensearch integration tests..."
-          docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && cp -rf tar/* . && ./test.sh integ-test manifests/${opensearch_tag}/opensearch-${opensearch_tag}-test.yml"
+          docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && mv -rf tar/* . && ./test.sh integ-test manifests/${{ inputs.open-search-tag }}/opensearch-${{ inputs.open-search-tag }}-test.yml"
   build-and-push-docker:
     permissions:
       contents: read
@@ -175,7 +174,7 @@ jobs:
     uses: netcracker/opensearch-patches/.github/workflows/re-docker-build.yaml@main
     needs: build-in-docker
     with:
-      opensearch-tag: ${{ inputs.opensearch-tag }}
+      open-search-tag: ${{ inputs.open-search-tag }}
       docker-test: ${{ inputs.docker-test }}
 
   trigger-qubership-opensearch-build:
@@ -184,12 +183,9 @@ jobs:
     needs: [build-and-push-docker]
     runs-on: ubuntu-latest
     steps:
-      - name: set default custom tag
-        run: |
-          echo "default_custom_tag=${default_custom_tag,,}" >> $GITHUB_ENV
       - name: "Trigger ${{ github.event.repository.name }}/qubership-opensearch build"
         if: ${{ inputs.trigger-qubership-opensearch-build }}
-        uses: netcracker/qubership-workflow-hub/actions/custom-event@396774180000abdb825cbf150b56cc59c6913db8  # v2.0.5
+        uses: netcracker/qubership-workflow-hub/actions/custom-event@v2.0.1
         with:
           github-token: ${{ secrets.GH_ACCESS_TOKEN }}
           owner: ${{ github.repository_owner }}
