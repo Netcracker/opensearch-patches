@@ -61,7 +61,7 @@ jobs:
           cd ${GITHUB_WORKSPACE}/opensearch-build/docker/release
           sed -i 's/TARBALL=`realpath $OPTARG`/TARBALL=`realpath -z $OPTARG`/' ./build-image-multi-arch.sh
           chmod +x ./build-image-multi-arch.sh
-          ./build-image-multi-arch.sh -v ${default_custom_tag,,} -f ./dockerfiles/opensearch.al2.dockerfile -p opensearch -a "arm64,x64" -t "${TARFILE}" -r ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/opensearch
+          ./build-image-multi-arch.sh -v ${default_custom_tag,,} -f ./dockerfiles/opensearch.al2023.dockerfile -p opensearch -a "arm64,x64" -t "${TARFILE}" -r ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/opensearch
 
   docker-image-tests:
     name: "${{ matrix.platform.architecture }} Docker Image Tests"
