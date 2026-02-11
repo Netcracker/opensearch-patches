@@ -28,7 +28,7 @@ jobs:
     name: "Trigger qubership-opensearch build"
     runs-on: ubuntu-latest
     steps:
-      - name: Set env:
+      - name: Set env
         run: |
           echo "CUSTOM_TAG=${default_custom_tag,,}" >> $GITHUB_ENV
       - name: "Trigger ${{ github.event.repository.name }}/qubership-opensearch build"
