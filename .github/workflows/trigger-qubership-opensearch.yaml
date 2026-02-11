@@ -1,0 +1,41 @@
+---
+
+name: "Trigger Qubership OpenSearch Build"
+run-name: "OpenSearch ${{ inputs.open-search-tag }}"
+on:
+  workflow_dispatch:
+    inputs:
+      open-search-tag:
+        type: string
+        required: true
+        description: "Tag in the opensearch-project/OpenSearch repository"
+        default: "3.4.0"
+      target-branch:
+        type: string
+        required: true
+        default: "main"
+        description: "Target branch in qubership-opensearch repository"
+
+permissions:
+  contents: read
+env:
+  OPEN_SEARCH_TAG: "${{ inputs.open-search-tag }}"
+  TARGET_BRANCH: "${{ inputs.target-branch }}"
+  default_custom_tag: "ghcr.io/${{ github.repository_owner }}/opensearch:${{ github.event.inputs.open-search-tag }}-custom-patches"
+
+jobs:
+  trigger-qubership-opensearch-build:
+    name: "Trigger qubership-opensearch build"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set env:
+        run: |
+          echo "CUSTOM_TAG=${default_custom_tag,,}" >> $GITHUB_ENV
+      - name: "Trigger ${{ github.event.repository.name }}/qubership-opensearch build"
+        uses: netcracker/qubership-workflow-hub/actions/custom-event@v2.0.10
+        with:
+          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: qubership-opensearch
+          event-type: opensearch-patched-build
+          client-payload: '{"opensearch_tag": "${{ env.OPEN_SEARCH_TAG }}", "custom_opensearch_version": "${{ env.CUSTOM_TAG }}", "target_branch": "${{ env.TARGET_BRANCH }}"}'
