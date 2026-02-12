@@ -22,11 +22,11 @@ on:
         required: true
         default: "main"
         description: "Target branch in qubership-opensearch repository"
-#       integration-tests:
-#         type: boolean
-#         description: "Whether to trigger opensearch integration tests (may take a while)"
-#         required: false
-#         default: false
+      integration-tests:
+        type: boolean
+        description: "Whether to trigger opensearch integration tests (may take a while)"
+        required: false
+        default: false
       docker-test:
         type: boolean
         description: "Whether to run docker image tests after build"
@@ -170,11 +170,12 @@ jobs:
           name: opensearch-build-artifacts-${{ matrix.platform.architecture }}
           path: |
             ${{ github.workspace }}/build-artifacts/${{ matrix.platform.architecture }}/*.tar.gz
-#       - name: Execute integration tests (optional)
-#         if: ${{ env.INTEGRATION_TEST == 'true' }}
-#         run: |
-#           echo "Triggering opensearch integration tests..."
-#           docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && mv -f tar/* . && ./test.sh integ-test manifests/${{ env.OPEN_SEARCH_TAG }}/opensearch-${{ env.OPEN_SEARCH_TAG }}-test.yml"
+      - name: Execute integration tests (optional)
+        continue-on-error: true
+        if: ${{ inputs.integration-tests == 'true' || github.event_name == 'schedule' }}
+        run: |
+          echo "Triggering opensearch integration tests..."
+          docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && cp -r tar/* . && ./test.sh integ-test manifests/${{ env.OPEN_SEARCH_TAG }}/opensearch-${{ env.OPEN_SEARCH_TAG }}-test.yml"
   build-and-push-docker:
     permissions:
       contents: read
