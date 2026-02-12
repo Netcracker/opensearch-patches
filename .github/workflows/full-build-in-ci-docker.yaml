@@ -172,7 +172,7 @@ jobs:
             ${{ github.workspace }}/build-artifacts/${{ matrix.platform.architecture }}/*.tar.gz
       - name: Execute integration tests (optional)
         continue-on-error: true
-        if: ${{ inputs.integration-tests == 'true' || github.event_name == 'schedule' }}
+        if: ${{ inputs.integration-tests == true || github.event_name == 'schedule' }}
         run: |
           echo "Triggering opensearch integration tests..."
           docker exec --user ci-runner ci-docker bash -c "cd /home/ci-runner/opensearch-build && cp -r tar/* . && ./test.sh integ-test manifests/${{ env.OPEN_SEARCH_TAG }}/opensearch-${{ env.OPEN_SEARCH_TAG }}-test.yml"
@@ -184,10 +184,10 @@ jobs:
     needs: build-in-docker
     with:
       opensearch-tag: "${{ inputs.open-search-tag || '3.4.0' }}"
-      docker-test: ${{ inputs.docker-test || 'true' }}
+      docker-test: ${{ inputs.docker-test || github.event_name == 'schedule' }}
 
   trigger-qubership-opensearch-build:
-    if: ${{ inputs.trigger-qubership-opensearch-build == true || true }}
+    if: ${{ inputs.trigger-qubership-opensearch-build == true || github.event_name == 'schedule' }}
     name: "Trigger qubership-opensearch build"
     needs: [build-and-push-docker]
     runs-on: ubuntu-latest
