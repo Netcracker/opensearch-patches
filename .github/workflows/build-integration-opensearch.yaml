@@ -139,7 +139,7 @@ jobs:
           echo """
           #!/bin/bash
           export JAVA_HOME=/opt/java/openjdk-21
-          git clone https://github.com/opensearch-project/opensearch-build.git
+          git clone -b ${OPEN_SEARCH_TAG} https://github.com/opensearch-project/opensearch-build.git
           cd opensearch-build
           # Modify build configuration to use patched OpenSearch
           if [ ! -f manifests/${{ env.OPEN_SEARCH_TAG }}/opensearch-${{ env.OPEN_SEARCH_TAG }}.yml ]; then
